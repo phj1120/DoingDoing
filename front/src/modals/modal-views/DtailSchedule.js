@@ -3,12 +3,14 @@ import useModals from "../../modals/useModals"
 import { modals } from "../../modals/Modals"
 import Switch from '@mui/material/Switch';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom"
 
 const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
 const DetailSchedule = ({onClose, scheduleNo}) =>{
 
     const { openModal } = useModals();
+    const navigate = useNavigate();
     
     const handleClickModify = () => {
         onClose();
@@ -27,6 +29,7 @@ const DetailSchedule = ({onClose, scheduleNo}) =>{
 
     const handleClickDelete = () =>{
         deleteSchedule();
+        navigate(0);
         onClose();
     }
 
@@ -42,6 +45,7 @@ const DetailSchedule = ({onClose, scheduleNo}) =>{
 
             if(res.status == 200){
                 console.log('게시글 삭제 완료');
+                navigate(`/schedule`);
             }
         }catch(e){
             //에러
@@ -61,6 +65,11 @@ const DetailSchedule = ({onClose, scheduleNo}) =>{
             })
 
             if(res.status == 200){
+                
+                if(res.data.endDate){
+                    setSchedule(res.data);
+                    return true;
+                }
                 setSchedule(res.data);
             }
             
@@ -70,7 +79,6 @@ const DetailSchedule = ({onClose, scheduleNo}) =>{
             alert("에러");
         }
     }
-
     useEffect(() =>{
         getSchedule();
     },[])

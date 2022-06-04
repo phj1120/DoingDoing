@@ -1,24 +1,25 @@
 import { useEffect, useState } from 'react';
 import Switch from '@mui/material/Switch';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom"
 
 const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
 const ModifySchedule = ({onSubmit, onClose, scheduleNo}) =>{
-
-    const [schedule, setSchedule] = useState({
-        title:"제목",
-        content:"안녕하십니까 내용입니다.",
-        isPublic: false,
-        endDate: "2022-05-31"
-    });
+    
+    const navigate = useNavigate();
+    const [schedule, setSchedule] = useState({});
 
     const onChangeTitle = (e) =>{
         setSchedule({...schedule, title: e.target.value})
     }
 
     const onChangeDate = (e) =>{
-        setSchedule({...schedule, endTime: e.target.value+"T23:59:59"});
+        if(e.target.value == ""){
+            setSchedule({...schedule, endDate: 0});
+            return true;
+        }
+        setSchedule({...schedule, endDate: e.target.value});
     }
 
     const onChangeContent = (e) =>{
@@ -53,6 +54,10 @@ const ModifySchedule = ({onSubmit, onClose, scheduleNo}) =>{
             })
 
             if(res.status == 200){
+                if(res.data.endDate){
+                    setSchedule(res.data);
+                    return true;
+                }
                 setSchedule(res.data);
             }
             
@@ -65,6 +70,7 @@ const ModifySchedule = ({onSubmit, onClose, scheduleNo}) =>{
 
     const handleClickSubmit = () => {
         modifySchedule();
+        //navigate(0);
         onSubmit();
     }
 

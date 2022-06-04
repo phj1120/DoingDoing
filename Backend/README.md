@@ -1,3 +1,11 @@
+# TODO
+
+```
+일정 수정
+기한있는 일정을 기한 없는 일정으로 바꿀 경우
+endDate : 0 을 보내 주는 것으로 합의.
+```
+
 ## 진행 현황
 
 예정 : Swagger 적용 / Test 코드 작성 / 친구 기능 추가
@@ -451,3 +459,6 @@ DB 에는 Not Null 로 되어있음
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
 
     "endTime": "2020-03-19T00:58:23",
+
+### LocalDateTime -> LocalDate
+
