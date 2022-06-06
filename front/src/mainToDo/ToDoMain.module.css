@@ -1,13 +1,19 @@
+.schedule-main{
+    padding: 0 10% 0 10%;
+    background: lightslategray;
+    height: 100%;
+}
+
 .container{
     display: flex;
     flex-wrap: wrap;
-    border-style: solid;
-    height: 90vh;
+    height: 45vh;
 }
 
 .btn{
     height: 2em;
     font-size: 1em;
     float: right;
-    margin-right: 10px;
+    margin-right: 5%;
 }
+
