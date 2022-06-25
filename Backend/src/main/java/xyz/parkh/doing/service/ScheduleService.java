@@ -60,12 +60,12 @@ public class ScheduleService {
 
         // 필수 인자가 없는 경우
         if (userIdInJwt == null || userId == null || requestIsComplete == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         // 완료 되지 않은 일정 조회 시 기한이 있는 것 없는 것 구분 필수
         if (!requestIsComplete && requestHasDeadLine == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         // TODO 친구 기능 추가 시 권한 확인하는 코드 작성 필요, 현재 본인 정보만 조회 가능.
@@ -98,7 +98,7 @@ public class ScheduleService {
                     overDeadLine = now.isAfter(endDate);
                 }
 
-                ScheduleShortInfo scheduleShortInfo = new ScheduleShortInfo().builder().no(no)
+                ScheduleShortInfo scheduleShortInfo = ScheduleShortInfo.builder().no(no)
                         .endDate(endDate).overDeadLine(overDeadLine).title(title).build();
                 scheduleShortInfoList.add(scheduleShortInfo);
             } else if (requestHasDeadLine) {
@@ -107,14 +107,14 @@ public class ScheduleService {
 
                 overDeadLine = now.isAfter(endDate);
 
-                ScheduleShortInfo scheduleShortInfo = new ScheduleShortInfo().builder().no(no).title(title)
+                ScheduleShortInfo scheduleShortInfo = ScheduleShortInfo.builder().no(no).title(title)
                         .overDeadLine(overDeadLine).endDate(endDate).build();
                 scheduleShortInfoList.add(scheduleShortInfo);
             } else {
                 // 완료 되지 않고 기한이 없는 일정 조회
                 if (isComplete || endDate != null) continue; // 완료 되었거나 기한이 있는 일정일 경우 처리하지 않음
 
-                ScheduleShortInfo scheduleShortInfo = new ScheduleShortInfo().builder().no(no).title(title).build();
+                ScheduleShortInfo scheduleShortInfo = ScheduleShortInfo.builder().no(no).title(title).build();
                 scheduleShortInfoList.add(scheduleShortInfo);
             }
         }
@@ -128,7 +128,7 @@ public class ScheduleService {
 
         // 필수 인자가 없는 경우
         if (userIdInJwt == null || userId == null || title == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         // TODO 친구가 글 작성하는 기능 추가 시 권한 확인하는 코드 작성 필요
@@ -147,7 +147,7 @@ public class ScheduleService {
 
         // 필수 인자가 없는 경우
         if (userIdInJwt == null || userId == null || scheduleNo == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         if (!userId.equals(userIdInJwt)) {
@@ -156,7 +156,7 @@ public class ScheduleService {
 
         ScheduleVo existScheduleVo = scheduleMapper.selectByNo(scheduleNo);
         if (existScheduleVo == null) {
-            throw new IllegalStateException(ErrorMessage.NOEXISTSCHEDULE.getErrorMessage());
+            throw new IllegalArgumentException(ErrorMessage.NOEXISTSCHEDULE.getErrorMessage());
         }
 
         scheduleVo.setNo(scheduleNo);
@@ -173,7 +173,7 @@ public class ScheduleService {
     public ResponseEntity removeSchedule(final String userIdInJwt, final String userId, final Integer scheduleNo) {
         // 필수 인자가 없는 경우
         if (userIdInJwt == null || userId == null || scheduleNo == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         if (!userId.equals(userIdInJwt)) {

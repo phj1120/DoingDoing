@@ -55,7 +55,7 @@ public class AuthService {
         // 로그인 성공
         if (signInStatus) {
             String jwt = JwtManager.generateToken(userId);
-            JwtDto jwtDto = new JwtDto().builder().jwt(jwt).build();
+            JwtDto jwtDto = JwtDto.builder().jwt(jwt).build();
             return ResponseEntity.ok().body(jwtDto);
         } else {
             // 로그인 실패 - 비밀번호가 틀린 경우
@@ -100,12 +100,12 @@ public class AuthService {
         userAuthDto.setPassword(hashedPassword);
 
         // UserAuthVo -> UserVo
-        UserVo userVo = new UserVo().builder().userId(userId)
+        UserVo userVo = UserVo.builder().userId(userId)
                 .email(email).company(company)
                 .name(name).build();
 
         // UserAuthVo -> AuthVo
-        AuthVo authVo = new AuthVo().builder().userId(userAuthDto.getUserId())
+        AuthVo authVo = AuthVo.builder().userId(userAuthDto.getUserId())
                 .password(userAuthDto.getPassword()).build();
 
         // TODO try 로 에러 처리? or ExceptionHandler 에 등록?
@@ -152,7 +152,7 @@ public class AuthService {
         String authKey = RandomStringUtils.random(length, useLetters, useNumbers);
 
         // 인증 번호 저장
-        AuthKeyVo authKeyVo = new AuthKeyVo().builder().userId(userId).authKey(authKey)
+        AuthKeyVo authKeyVo = AuthKeyVo.builder().userId(userId).authKey(authKey)
                 .email(email).type(type).crateTime(LocalDateTime.now()).build();
         authKeyMapper.insert(authKeyVo);
 
@@ -187,16 +187,11 @@ public class AuthService {
         // 요청한 타입과 인증 하려하는 타입이 다를 경우
         // 회원 가입 이메일 인증시 type 만 바꿔서 JWT 반환해 주는 것을 방지하기 위함.
         if (!Objects.equals(type, readType)) {
-            throw new IllegalStateException(ErrorMessage.DIFFRENTSERVICETYPE.getErrorMessage());
+            throw new IllegalArgumentException(ErrorMessage.DIFFRENTSERVICETYPE.getErrorMessage());
         }
 
         String readAuthKey = readAuthKeyVo.getAuthKey();
         LocalDateTime readCreateTime = readAuthKeyVo.getCrateTime();
-
-        // 비밀번호 찾기 인 경우 Jwt 함께 반환
-        if (type == 00) {
-            jwt = JwtManager.generateToken(userId);
-        }
 
         // 키 생성 시간 <= 현재 시간 <= 키 생성 시간 + 10 분
         boolean isAfterCreateKey = LocalDateTime.now().isAfter(readCreateTime);
@@ -208,7 +203,12 @@ public class AuthService {
         } else if (!authKey.equals(readAuthKey)) {
             throw new IllegalArgumentException(ErrorMessage.DIFFRENTAUTHKEY.getErrorMessage());
         }
-        jwtCheckDto = new JwtCheckDto().builder().check(true).jwt(jwt).build();
+
+        // 비밀번호 찾기 인 경우 Jwt 함께 반환
+        if (type == 00) {
+            jwt = JwtManager.generateToken(userId);
+        }
+        jwtCheckDto = JwtCheckDto.builder().check(true).jwt(jwt).build();
 
         return ResponseEntity.ok().body(jwtCheckDto);
     }
@@ -217,17 +217,17 @@ public class AuthService {
     public ResponseEntity<CheckDto> checkUserId(final String userId) {
         // 필수 인자가 입력 되지 않았을 경우 에러 반환
         if (userId == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         UserVo existUser = userMapper.selectByUserId(userId);
 
         // 아이디로 조회된 사용자가 없을 경우 true / 있을 경우 false
         if (existUser != null) {
-            CheckDto checkDto = new CheckDto().builder().check(true).build();
+            CheckDto checkDto = CheckDto.builder().check(true).build();
             return ResponseEntity.ok().body(checkDto);
         }
-        CheckDto checkDto = new CheckDto().builder().check(false).build();
+        CheckDto checkDto = CheckDto.builder().check(false).build();
         return ResponseEntity.ok().body(checkDto);
     }
 
@@ -235,17 +235,17 @@ public class AuthService {
     public ResponseEntity<CheckDto> checkEmail(final String email) {
         // 필수 인자가 입력 되지 않았을 경우 에러 반환
         if (email == null) {
-            throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+            throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
         }
 
         UserVo existUser = userMapper.selectByEmail(email);
 
         // 이메일로 조회된 사용자가 없을 경우 true / 있을 경우 false
         if (existUser != null) {
-            CheckDto checkDto = new CheckDto().builder().check(true).build();
+            CheckDto checkDto = CheckDto.builder().check(true).build();
             return ResponseEntity.ok().body(checkDto);
         }
-        CheckDto checkDto = new CheckDto().builder().check(false).build();
+        CheckDto checkDto = CheckDto.builder().check(false).build();
         return ResponseEntity.ok().body(checkDto);
     }
 
@@ -264,7 +264,7 @@ public class AuthService {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         Boolean isSame = passwordEncoder.matches(authVo.getPassword(), existAuthVo.getPassword());
 
-        CheckDto checkDto = new CheckDto().builder().check(isSame).build();
+        CheckDto checkDto = CheckDto.builder().check(isSame).build();
         return ResponseEntity.ok().body(checkDto);
     }
 

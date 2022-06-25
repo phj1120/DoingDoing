@@ -4,6 +4,8 @@
 
 예정 : Swagger 적용 / Test 코드 작성 / 친구 기능 추가
 
+2022.06.21. 에러 메시지 열거형으로 관리
+
 2022.06.09. 배포 완료.
 
 2022.06.02~. 프론트와 통합하며 찾은 버그 수정
@@ -581,6 +583,26 @@ vue 를 빌드해서 nodejs 에 넣기만 하니까 바로 배포되는게 신�
 
 [나중에 참고](https://developer.okta.com/blog/2018/07/19/simple-crud-react-and-spring-boot)
 
+## 에러 메시지 열거형으로 관리
+
+2022.06.21.
+
+AS-IS
+
+```
+throw new ValueException("필수 인자가 없습니다.");
+```
+
+TO-BE
+
+```
+throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());;
+```
+
+기본으로 지원하는 Exception 로 변경하고
+
+에러 메시지를 열거형으로 관리하도록 변경
+
 ## 인증 번호 확인 수정
 
 2022.06.22.
@@ -597,9 +619,11 @@ vue 를 빌드해서 nodejs 에 넣기만 하니까 바로 배포되는게 신�
   "jwt": "eyJraWQiOiJteUtleUlkIiwiYWxnIjoiSFMyNTYifQ.eyJpc3MiOiJQQVJLSCIsImp0aSI6IjZjN2ZlYTllMDAxMDQzNWI4ZTdhMzZiNjdlYjMzMTU3IiwiaWF0IjoxNjU1ODI0MjExLCJuYmYiOjE2NTU4MjQyMTEsImV4cCI6MTY1NzYzODYxMSwidXNlcklkIjoiaHllb24ifQ.w7d3E2PNRqL3Kx4JLxlaqmH80So5CDTcZt3GBZb3ttU"
 }
 ```
+
 인증번호 유효기간이 지났을 경우 이렇게 잘 못 옴
 
 * 변경
+
 ```
 * // 인증 번호 유효 시간이 지났을 경우
 {
@@ -611,3 +635,145 @@ vue 를 빌드해서 nodejs 에 넣기만 하니까 바로 배포되는게 신�
   "error": "인증 번호가 일치하지 않습니다."
 }
 ```
+
+## 롬복 어노테이션 관련 수정 - domain
+
+2022.06.25.
+
+* @AllArgsConstructor
+
+멤버 변수 선언 순서에 영항을 받지 않아 의도치 않은 예외를 발생시킬 수 있음
+
+생성자를 명시적으로 만들고, Builder 패턴 이용할 것.
+
+* @NoArgsConstructor
+
+기본 생성자는 접근 제어를 지정해, 의미 없는 객체 생성 막는 것을 권장
+
+Mybatis 의 경우 객체를 생성할 때 디폴트 생성자가 필요함.
+
+PROTECTED 로 접근 제어
+
+기본 생성자 없이 Controller 에서 @RequestBody 로 받을 경우 HttpMessageConversionException 발생
+
+참고 하면 좋을 글
+
+https://jojoldu.tistory.com/407
+
+https://velog.io/@conatuseus/RequestBody에-기본-생성자는-왜-필요한가
+
+TO-BE
+
+```
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class AuthKeyVo {
+    private Integer no;
+    private String userId;
+    private String email;
+    private String authKey;
+    private Integer type;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime crateTime;
+}
+```
+
+AS-IS
+
+```
+@Data
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+// USER_ID, PASSWORD
+public class AuthVo {
+    private String userId;
+    private String password;
+
+    public AuthVo(String userId, String password) {
+        this.userId = userId;
+        this.password = password;
+    }
+}
+```
+
+* @Data
+
+무분별한 setter 는 jpa 를 사용할 경우 @toString 으로 인한 순환 참조 문제를 야기 시킬 수 있으므로,
+
+필요한 어노테이션을 선택적으로 사용하는 것이 좋음
+
+TO-BE
+
+```
+@Data
+```
+
+AS-IS
+
+```
+@Getter
+@Setter
+```
+
++
+
+UserVo 의 경우 userId 로 조회한 UserVo 와 email 로 조회한 UserVo 가 같은지 비교하기 위해 equals 오버라이딩 필요
+
+어떤건 equals 있고 어떤건 equals 없고 하면 괜히 유지 보수성만 떨어 뜨리는 거 아닌가?
+
+일단 override 했고, 추후 equals 없이 동일한 기능 하도록 생각해 볼 것.
+
+------------------------------- TODO 여기서 부터 하면 됨 -------------------------------
+
+* 멤버 변수 final
+
+JPA 엔티티를 제외하고 객체의 멤버 변수는 final 로 지정해 불변하게 지정해 주는 것이 좋음
+
+* Setter
+
+필요한 경우에만 의미 있는 이름으로 메소드를 새로 만들어 사용하는 것이 유지 보수 차원에서 좋음
+
+AS-IS
+
+```
+existAuthVo.setPassword(hashedPassword);
+```
+
+TO-BE
+
+```
+existAuthVo.updatePassword(hashedPassword);
+```
+
+## Exception 변경
+
+IllegalStateException vs IllegalArgumentException
+
+IllegalArgumentException : 넘겨 받은 매개변수가 잘못 된 값을 가지고 있을 경우
+
+IllegalStateException : 해당 메서드가 부적절한 시기에 호출됐을 경우
+
+필수 인자가 없는 경우는 주로 NullPointerException 을 던진다.
+
+AS-IS
+
+```
+throw new IllegalStateException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());;
+...
+throw new IllegalStateException(ErrorMessage.DIFFRENTSERVICETYPE.getErrorMessage());
+```
+
+TO-BE
+
+```
+throw new NullPointerException(ErrorMessage.NOREQUIREDPARAMETER.getErrorMessage());
+...
+throw new IllegalArgumentException(ErrorMessage.DIFFRENTEMAILANDID.getErrorMessage());
+```
+
+https://jaehun2841.github.io/2019/03/10/effective-java-item72/#표준-예외를-재사용하라
+
+https://www.inflearn.com/questions/504063
